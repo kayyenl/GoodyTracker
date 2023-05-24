@@ -5,13 +5,16 @@ const bodyParser = require("body-parser")
 const cors = require("cors")
 const userRoute = require('./routes/userRoute')
 const errorHandler = require('./middleWare/errorMiddleware')
+const cookieParser = require('cookie-parser')
 
 const app = express()
 
 //Middlewares
 app.use(express.json()) //help us handle json data in our application
+app.use(cookieParser())
 app.use(express.urlencoded({ extended: false })) //help us handle data that comes via url
 app.use(bodyParser.json())
+app.use(cors())
 
 //Middleware Routes
 app.use("/api/users", userRoute)
