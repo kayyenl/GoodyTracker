@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const Token = require('../models/tokenModel')
 const crypto = require("crypto")
+const sendEmail = require('../utils/sendEmail')
 
 const generateToken = (id) => {
     //parameters of jwt.sign: 
@@ -259,11 +260,39 @@ const forgotPassword = asyncHandler( async (req, res) => {
     // Construct Reset Url user will use
     const resetUrl = `${process.env.FRONTEND_URL}/resetpassword/${resetToken}`
 
-    
-    
+    //Reset Email fields
+    const message = 
+    `
+        <h2>Hello ${user.name} </h2>
+        <p>Please use the url below to reset your password.</p>
+        <p>This reset link is only valid for 30 minutes.</p>
+        <p>If you did not request for this, please ignore this email.</p>
+        
+        <a href=${resetUrl} clicktracking=off>
+        ${resetUrl}
+        </a>
+        
+        <p> Regards... </p>
+        <p> The Jolly Team </p>
+    `
 
-    res.send("Forgot the password.")
+    const subject = "Password Reset Request"
+    const send_to = user.email
+    const sent_from = process.env.EMAIL_USER
 
+    try {
+        await sendEmail(subject, message, send_to, sent_from)
+        res.status(200).json({
+            success: true,
+            message: "Reset Email is sent"
+        })
+    } catch (error) {
+        res.status(500)
+        throw new Error("Email is not sent, please try again.")
+    }
+
+    //Still, an error may be thrown if ur ip address gets blacklisted, and other 
+    //unexpected reasons.
 }) 
 
 //Steps when forget password

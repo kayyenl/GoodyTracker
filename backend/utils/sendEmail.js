@@ -10,7 +10,7 @@ const sendEmail = async (subject, message, send_to, sent_from, reply_to) => {
             pass: process.env.EMAIL_PASS,
         },
         tls: { //this is just to mitigate some security issues
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
         }
     })
 
@@ -22,7 +22,7 @@ const sendEmail = async (subject, message, send_to, sent_from, reply_to) => {
         to: send_to,
         replyTo: reply_to,
         subject: subject,
-        html: message, //we want to send an hhtml email
+        html: message, //we want to send an html email
     }
 
     //send email
