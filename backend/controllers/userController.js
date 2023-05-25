@@ -3,6 +3,8 @@ const asyncHandler = require('express-async-handler')
 const User = require('../models/userModel')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
+const Token = require('../models/tokenModel')
+const crypto = require("crypto")
 
 const generateToken = (id) => {
     //parameters of jwt.sign: 
@@ -193,8 +195,82 @@ const updateUser = asyncHandler(async(req, res) => {
 })
 
 const changePassword = asyncHandler(async(req, res) => {
-    
+    const user = await User.findById(req.user._id) //protect gives us access to the user thru this line.
+    const { oldPassword, password } = req.body //req.body is like what we submit via the frontend.
+
+    if (!user) { //check if user is logged in or not
+        res.status(400)
+        throw new Error("User not found, please signup.")
+    }
+
+    //Validating the form is filled up
+    if (!oldPassword || !password) {
+        res.status(400)
+        throw new Error("Please enter your old and new passwords.")
+    }
+
+    //check if password entered matches password in db
+    const passwordIsCorrect = await bcrypt.compare(oldPassword, user.password)
+
+    //we will now save the new password
+    if (user && passwordIsCorrect) {
+        user.password = password
+        await user.save()
+        res.status(200).send("Password changed successfully.")
+    } else {
+        res.status(400)
+        throw new Error("The old password is incorrect.")
+    }
+
 }) 
+
+const forgotPassword = asyncHandler( async (req, res) => {
+    const { email } = req.body
+    const user = await User.findOne({ email })
+
+    if (!user) {
+        res.status(404)
+        throw new Error("This user does not exist.")
+    }
+
+    //Create the reset password token
+    //crypto is a nodejs native module, 32 chars in this argument
+    //btw, this token changes every time
+    let resetToken = crypto.randomBytes(32).toString("hex") + user._id
+
+
+    //we are going to hash the token before saving to db
+    const hashedToken = crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex")
+
+    //Now we save this generated token into the db
+    //there are a few ways to save into database
+    //1. Model.create()
+    //2. assign to variable and call .save()
+    await new Token({
+        userId: user._id,
+        token: hashedToken,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + 30 * (60*1000) //thirty minutes
+    }).save()
+
+    // Construct Reset Url user will use
+    const resetUrl = `${process.env.FRONTEND_URL}/resetpassword/${resetToken}`
+
+    
+    
+
+    res.send("Forgot the password.")
+
+}) 
+
+//Steps when forget password
+//1. create forgot password route
+//2. create token model
+//3. create email sender
+//4. create controller function
 
 module.exports = {
     registerUser,
@@ -204,4 +280,5 @@ module.exports = {
     loginStatus,
     updateUser,
     changePassword,
+    forgotPassword,
 }

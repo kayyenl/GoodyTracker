@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router() // a mini standalone app. like a small app placeholder.
-const { registerUser, loginUser, logout, getUser, loginStatus, updateUser, changePassword } = require('../controllers/userController')
+const { registerUser, loginUser, logout, getUser, loginStatus, updateUser, changePassword, forgotPassword } = require('../controllers/userController')
 const protect = require('../middleWare/authMiddleware')
 
 router.post("/register", registerUser)
@@ -24,6 +24,9 @@ router.patch("/updateuser", protect, updateUser)
 //this does a partial change on user's fields.
 
 router.patch("/changepassword", protect, changePassword)
+
+router.post("/forgotpassword", forgotPassword)
+//post route as the user would have to send us their email
 
 
 module.exports = router
