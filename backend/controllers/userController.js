@@ -234,10 +234,21 @@ const forgotPassword = asyncHandler( async (req, res) => {
         throw new Error("This user does not exist.")
     }
 
+    //Delete token if it exists in the db
+    //and create a fresh token
+    let token = await Token.findOne({
+        userId: user._id,
+    })
+
+    if (token) {
+        await Token.deleteOne(token)
+    }
+
     //Create the reset password token
     //crypto is a nodejs native module, 32 chars in this argument
     //btw, this token changes every time
     let resetToken = crypto.randomBytes(32).toString("hex") + user._id
+    console.log(resetToken)
 
 
     //we are going to hash the token before saving to db
@@ -301,6 +312,40 @@ const forgotPassword = asyncHandler( async (req, res) => {
 //3. create email sender
 //4. create controller function
 
+const resetPassword = asyncHandler(async (req, res) => {
+    
+    const { password } = req.body
+    const { resetToken } = req.params
+
+    //We will then hash this token, and compare it to the database
+    const hashedToken = crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex")
+
+    //find token in db
+    const userToken = await Token.findOne({ //this object in the findOne argument is checking if there are any matches in Token db.
+        token: hashedToken,
+        expiresAt: { $gt: Date.now() } //this is mongoose lingo to check if expired.
+    })
+
+    if (!userToken) {
+        res.status(404)
+        throw new Error("Your token is invalid, please make another request.")
+    }
+
+    //Find the user
+    const user = await User.findOne({
+        _id: userToken.userId
+    })
+    user.password = password
+    await user.save()
+    res.status(200).json({ //we do these json things to send stuff back to the frontend.
+        message: "Password reset successful! Please log in."
+    })
+
+})
+
 module.exports = {
     registerUser,
     loginUser,
@@ -310,4 +355,5 @@ module.exports = {
     updateUser,
     changePassword,
     forgotPassword,
+    resetPassword,
 }

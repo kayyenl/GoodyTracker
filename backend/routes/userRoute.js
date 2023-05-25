@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router() // a mini standalone app. like a small app placeholder.
-const { registerUser, loginUser, logout, getUser, loginStatus, updateUser, changePassword, forgotPassword } = require('../controllers/userController')
+const { registerUser, loginUser, logout, getUser, loginStatus, updateUser, changePassword, forgotPassword, resetPassword } = require('../controllers/userController')
 const protect = require('../middleWare/authMiddleware')
 
 router.post("/register", registerUser)
@@ -27,6 +27,13 @@ router.patch("/changepassword", protect, changePassword)
 
 router.post("/forgotpassword", forgotPassword)
 //post route as the user would have to send us their email
+
+router.put("/resetpassword/:resetToken", resetPassword)
+//The HTTP PUT request method creates a new resource or replaces
+// a representation of the target resource with the request payload
+
+
+
 
 
 module.exports = router
