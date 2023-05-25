@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router() // a mini standalone app. like a small app placeholder.
-const { registerUser, loginUser, logout, getUser } = require('../controllers/userController')
+const { registerUser, loginUser, logout, getUser, loginStatus, updateUser, changePassword } = require('../controllers/userController')
 const protect = require('../middleWare/authMiddleware')
 
 router.post("/register", registerUser)
@@ -15,5 +15,15 @@ router.get('/getuser', protect, getUser)
 //banning access to the endpoint of the user is not logged in.
 //we do this by a middleware function, that will be in the middleware folder cus it will be used in 
 //different parts of the application.
+//through a req.user property, this protect middleware will provide user info if request is valid
+
+router.get("/loggedin", loginStatus)
+//this is to check if the user is currently logged in
+
+router.patch("/updateuser", protect, updateUser)
+//this does a partial change on user's fields.
+
+router.patch("/changepassword", protect, changePassword)
+
 
 module.exports = router

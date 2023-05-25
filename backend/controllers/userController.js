@@ -135,12 +135,73 @@ const logout = asyncHandler(async (req, res) => {
 
 //Get users data / profile
 const getUser = asyncHandler(async (req, res) => {
-    res.send("get user data")
+    const user = await User.findById(req.user._id)
+    //any time u talk to the db, u gotta do an await
+
+    if (user) {
+        const { _id, name, email, photo, phone, bio } = user
+        res.status(200).json({   //status code 200 denotes a successful response.
+            _id, name, email, photo, phone, bio
+        }) 
+    } else {
+        throw new Error("User is not found.")
+    }
 })
+
+
+//get login status, to check if someone is logged in or not
+const loginStatus = asyncHandler(async (req, res) => {
+    const token = req.cookies.token
+    if (!token) {
+        return res.json(false) 
+    }
+
+    const verified = jwt.verify(token, process.env.JWT_SECRET)
+    if (verified) {
+        return res.json(true)
+    }
+
+    return res.json(false)
+})
+
+//Update user
+//we can access the user's id since we passed in the protect middleware in this call too.   
+const updateUser = asyncHandler(async(req, res) => {
+    const user = await User.findById(req.user._id)
+
+    if (user) {
+        const { name, email, photo, phone, bio } = user
+        user.email = email
+        user.name = req.body.name || name
+        user.photo = req.body.photo || photo
+        user.phone = req.body.phone || phone
+        user.bio = req.body.bio || bio
+
+        const updatedUser = await user.save()
+        res.status(200).json({   //status code 200 denotes a successful response.
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            photo: updatedUser.photo,
+            phone: updatedUser.phone, 
+            bio: updatedUser.bio,
+        }) //we will deal with the password separately 
+    } else {
+        res.status(404)
+        throw new Error("User not found.")
+    } 
+})
+
+const changePassword = asyncHandler(async(req, res) => {
+    
+}) 
 
 module.exports = {
     registerUser,
     loginUser,
     logout,
     getUser,
+    loginStatus,
+    updateUser,
+    changePassword,
 }
